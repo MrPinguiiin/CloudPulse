@@ -230,6 +230,40 @@
 							<span>Total TX: {metric ? formatBytes(metric.networkTx) : '—'}</span>
 						</div>
 					</div>
+
+					<div class="bg-card p-6 rounded-2xl border border-border shadow-sm">
+						<div class="flex items-center gap-2 mb-4">
+							<Activity class="w-5 h-5 text-violet-400" />
+							<h3 class="text-lg font-semibold text-foreground">Load Average</h3>
+						</div>
+						<div class="grid grid-cols-3 gap-4">
+							<div class="rounded-lg bg-muted/30 p-4 text-center">
+								<div class="text-3xl font-bold tabular-nums text-violet-400">
+									{metric?.loadAvg1m?.toFixed(2) ?? '—'}
+								</div>
+								<div class="mt-1 text-xs text-muted-foreground">1 min</div>
+								<div class="mt-0.5 text-[10px] text-muted-foreground/50">last minute</div>
+							</div>
+							<div class="rounded-lg bg-muted/30 p-4 text-center">
+								<div class="text-3xl font-bold tabular-nums text-violet-300">
+									{serverQuery.data.metrics?.[0]?.loadAvg5m?.toFixed(2) ?? '—'}
+								</div>
+								<div class="mt-1 text-xs text-muted-foreground">5 min</div>
+								<div class="mt-0.5 text-[10px] text-muted-foreground/50">last 5 min</div>
+							</div>
+							<div class="rounded-lg bg-muted/30 p-4 text-center">
+								<div class="text-3xl font-bold tabular-nums text-violet-200">
+									{serverQuery.data.metrics?.[0]?.loadAvg15m?.toFixed(2) ?? '—'}
+								</div>
+								<div class="mt-1 text-xs text-muted-foreground">15 min</div>
+								<div class="mt-0.5 text-[10px] text-muted-foreground/50">last 15 min</div>
+							</div>
+						</div>
+						<div class="mt-4 rounded-lg bg-muted/20 p-3 flex justify-between text-xs text-muted-foreground">
+							<span>Uptime: {metric ? formatUptime(metric.uptime) : '—'}</span>
+							<span title="Semakin tinggi load avg dibanding jumlah CPU core, semakin sibuk sistem">Cores: {serverQuery.data.metrics?.[0]?.cpuCores ? String(serverQuery.data.metrics[0].cpuCores) : '—'}</span>
+						</div>
+					</div>
 				</div>
 			</section>
 
