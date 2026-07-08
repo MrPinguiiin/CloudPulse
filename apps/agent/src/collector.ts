@@ -1,4 +1,5 @@
 import si from "systeminformation";
+import { loadavg } from "node:os";
 
 export interface SystemMetrics {
   cpuUsage: number;
@@ -70,8 +71,8 @@ export async function collectMetrics(): Promise<SystemMetrics> {
     networkTxSpeed: mainNet?.tx_sec ?? null,
     uptime: timeInfo.uptime,
     loadAvg1m: loadInfo.avgLoad ?? null,
-    loadAvg5m: null,
-    loadAvg15m: null,
+    loadAvg5m: loadavg()[1] ?? null,
+    loadAvg15m: loadavg()[2] ?? null,
     temperature: tempInfo.main ?? null,
     timestamp: now.toISOString(),
   };

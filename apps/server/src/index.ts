@@ -1,7 +1,8 @@
 import { createContext } from "@monitoring-server/api/context";
 import { appRouter } from "@monitoring-server/api/routers/index";
-import { addWsClient, removeWsClient } from "@monitoring-server/api/routers/monitoring";
+import { addWsClient, removeWsClient, broadcastServerStatus } from "@monitoring-server/api/routers/monitoring";
 import { auth } from "@monitoring-server/auth";
+import prisma from "@monitoring-server/db";
 import { env } from "@monitoring-server/env/server";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
@@ -115,3 +116,28 @@ app.get("/ws", (c) => {
 });
 
 export default app;
+
+const OFFLINE_TIMEOUT_MS = 15_000;
+
+setInterval(async () => {
+  try {
+    const cutoff = new Date(Date.now() - OFFLINE_TIMEOUT_MS);
+    const staleServers = await prisma.server.findMany({
+      where: {
+        status: "ONLINE",
+        lastSeenAt: { lt: cutoff },
+      },
+      select: { id: true },
+    });
+
+    for (const server of staleServers) {
+      await prisma.server.update({
+        where: { id: server.id },
+        data: { status: "OFFLINE" },
+      });
+      broadcastServerStatus(server.id, "OFFLINE");
+    }
+  } catch (err) {
+    console.error("[offline-detector] Error:", err);
+  }
+}, OFFLINE_TIMEOUT_MS);
