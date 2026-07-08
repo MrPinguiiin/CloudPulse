@@ -4,52 +4,45 @@
     value: number;
     max?: number;
     unit?: string;
-    color?: string;
+    gradientFrom?: string;
+    gradientTo?: string;
   }
 
-  const { label, value, max = 100, unit = "%", color = "text-emerald-400" }: Props = $props();
+  const { label, value = 0, max = 100, unit = "%", gradientFrom = "#10b981", gradientTo = "#059669" }: Props = $props();
 
-  const clamped = $derived(Math.min(Math.max(value, 0), max));
-  const pct = $derived(max > 0 ? (clamped / max) * 100 : 0);
+  const safe = $derived(Math.max(0, Math.min(100, Number(value) || 0)));
+  const circumference = 2 * Math.PI * 45;
+  const offset = $derived(circumference - (safe / 100) * circumference);
 
-  const gaugeColors: Record<string, string> = {
-    "text-emerald-400": "#4ade80",
-    "text-blue-400": "#60a5fa",
-    "text-amber-400": "#facc15",
-    "text-destructive": "#f87171",
-    "text-violet-400": "#c084fc",
-    "text-purple-400": "#c084fc",
-  };
-  const strokeColor = $derived(gaugeColors[color] ?? "#4ade80");
-  const trackColor = "var(--color-muted)";
-
-  const radius = 40;
-  const circumference = 2 * Math.PI * radius;
-  const dashOffset = $derived(circumference - (pct / 100) * circumference);
+  const gradientId = $derived(`gauge-${label.replace(/\s/g, "")}`);
 </script>
 
-<div class="flex flex-col items-center gap-1">
-  <div class="relative w-24 h-24">
-    <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
+<div class="flex flex-col items-center gap-4">
+  <div class="relative w-40 h-40">
+    <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+      <defs>
+        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color={gradientFrom} />
+          <stop offset="100%" stop-color={gradientTo} />
+        </linearGradient>
+      </defs>
+      <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="6" class="text-muted/30" />
       <circle
-        cx="50" cy="50" r={radius}
-        fill="none" stroke="currentColor" stroke-width="8"
-        class="text-muted/30"
-      />
-      <circle
-        cx="50" cy="50" r={radius}
-        fill="none" stroke={strokeColor} stroke-width="8"
-        stroke-linecap="round"
+        cx="50" cy="50" r="45"
+        fill="none"
+        stroke={`url(#${gradientId})`}
+        stroke-width="6"
         stroke-dasharray={circumference}
-        stroke-dashoffset={dashOffset}
-        style="transition: stroke-dashoffset 0.5s ease"
+        stroke-dashoffset={offset}
+        stroke-linecap="round"
+        style="transition: stroke-dashoffset 0.6s ease-out"
       />
     </svg>
     <div class="absolute inset-0 flex items-center justify-center">
-      <span class="text-lg font-semibold tabular-nums {color}">
-        {clamped.toFixed(1)}{unit}
-      </span>
+      <div class="text-4xl font-bold tabular-nums" style="transition: all 0.4s ease">
+        {safe.toFixed(1)}%
+      </div>
     </div>
   </div>
-  <span class="text-xs text-muted-foreground">{label}</span>
+  <div class="text-lg font-semibold text-foreground">{label}</div>
 </div>

@@ -7,7 +7,8 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import MetricGauge from '$lib/components/MetricGauge.svelte';
 	import LineChart from '$lib/components/LineChart.svelte';
-	import ServerStatusBadge from '$lib/components/ServerStatusBadge.svelte';
+	import { Activity, Zap, Cpu, HardDrive, Server } from 'lucide-svelte';
+	import InfoRow from '$lib/components/InfoRow.svelte';
 
 	const sessionQuery = authClient.useSession();
 	const serverId = $derived($page.params.id as string);
@@ -18,11 +19,7 @@
 	);
 
 	const historyQuery = createQuery(() =>
-		orpc.monitoring.metricHistory.queryOptions({ input: { serverId, hours: 24 }, refetchInterval: 5000 }),
-	);
-
-	const alertsQuery = createQuery(() =>
-		orpc.monitoring.alertList.queryOptions({ input: { serverId } }),
+		orpc.monitoring.metricHistory.queryOptions({ input: { serverId, hours: 24 }, refetchInterval: 1000 }),
 	);
 
 	$effect(() => {
@@ -62,9 +59,8 @@
 		})),
 	);
 
-	const currentStatus = $derived(
-		(live.getStatus(serverId) as "ONLINE" | "OFFLINE" | undefined) ??
-			(serverQuery.data?.status as "ONLINE" | "OFFLINE"),
+	const status = $derived(
+		(live.getStatus(serverId) as string | undefined) ?? serverQuery.data?.status ?? "OFFLINE",
 	);
 
 	function formatBytes(bytes: number): string {
@@ -82,12 +78,6 @@
 		if (h > 0) return `${h}h ${m}m`;
 		return `${m}m`;
 	}
-
-	function severityColor(severity: string): string {
-		if (severity === 'CRITICAL') return 'text-destructive';
-		if (severity === 'WARNING') return 'text-amber-400';
-		return 'text-blue-400';
-	}
 </script>
 
 {#if $sessionQuery.isPending || serverQuery.isLoading}
@@ -99,124 +89,109 @@
 		<p class="text-muted-foreground">Redirecting...</p>
 	</div>
 {:else if serverQuery.data}
-	<div class="container mx-auto max-w-6xl px-4 py-6">
-		<div class="mb-6 flex items-center justify-between">
-			<div>
-				<a href="/dashboard" class="text-sm text-muted-foreground hover:text-foreground transition-colors">
-					&larr; Servers
-				</a>
-				<h1 class="text-2xl font-semibold mt-1">{serverQuery.data.hostname}</h1>
-				<div class="flex items-center gap-3 mt-1">
-					<span class="text-sm text-muted-foreground">{serverQuery.data.ip}</span>
-					<span class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase">
-						{serverQuery.data.type}
-					</span>
-					{#if currentStatus}
-						<ServerStatusBadge status={currentStatus} size="sm" />
-					{/if}
+	<div class="min-h-full bg-gradient-to-br from-background to-muted/30 p-8">
+		<div class="mx-auto max-w-7xl">
+
+			<header class="flex items-center justify-between mb-8">
+				<div>
+					<a href="/dashboard" class="text-sm text-muted-foreground hover:text-foreground transition-colors">&larr; Servers</a>
+					<h1 class="text-3xl font-bold text-foreground mt-1 mb-1">{serverQuery.data.hostname}</h1>
 				</div>
-			</div>
-		</div>
-
-		<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-			<div class="col-span-2">
-				<div class="rounded-lg border border-border bg-card p-4">
-					<h2 class="text-sm font-medium text-muted-foreground mb-4">Current</h2>
-					<div class="flex flex-wrap justify-center gap-8">
-						<MetricGauge label="CPU" value={metric?.cpuUsage ?? 0} color="text-emerald-400" />
-						<MetricGauge label="RAM" value={metric?.ramUsagePct ?? 0} color="text-blue-400" />
-						<MetricGauge label="Disk" value={metric?.diskUsagePct ?? 0} color="text-violet-400" />
+				<div class="flex items-center gap-3">
+					<div class="px-4 py-2 bg-card text-foreground text-sm font-mono rounded-lg border border-border">
+						{serverQuery.data.ip}
+					</div>
+					<div class="flex items-center gap-2 px-3 py-2 {status === 'ONLINE' ? 'bg-emerald-500/10' : 'bg-muted'} rounded-lg border {status === 'ONLINE' ? 'border-emerald-500/20' : 'border-border'}">
+						<div class="w-2 h-2 rounded-full {status === 'ONLINE' ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground'}"></div>
+						<span class="text-xs font-medium {status === 'ONLINE' ? 'text-emerald-400' : 'text-muted-foreground'}">{status}</span>
 					</div>
 				</div>
-			</div>
+			</header>
 
-			<div>
-				<div class="rounded-lg border border-border bg-card p-4">
-					<h2 class="text-sm font-medium text-muted-foreground mb-3">System Info</h2>
-					<div class="grid grid-cols-2 gap-2 text-sm">
-						<p class="text-muted-foreground">OS</p>
-						<p>{serverQuery.data.osName ?? '—'} {serverQuery.data.osVersion ?? ''}</p>
-						<p class="text-muted-foreground">Kernel</p>
-						<p>{serverQuery.data.kernel ?? '—'}</p>
-						<p class="text-muted-foreground">Provider</p>
-						<p>{serverQuery.data.provider ?? '—'}</p>
-						<p class="text-muted-foreground">Location</p>
-						<p>{serverQuery.data.location ?? '—'}</p>
-						<p class="text-muted-foreground">Port</p>
-						<p>{serverQuery.data.port}</p>
+			<section class="mb-8">
+				<h2 class="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wide">Current Status</h2>
+				<div class="grid grid-cols-2 md:grid-cols-4 gap-8 bg-card p-8 rounded-2xl border border-border shadow-sm">
+					<MetricGauge
+						label="CPU"
+						value={metric?.cpuUsage ?? 0}
+						gradientFrom="#10b981"
+						gradientTo="#059669"
+					/>
+					<MetricGauge
+						label="RAM"
+						value={metric?.ramUsagePct ?? 0}
+						gradientFrom="#3b82f6"
+						gradientTo="#2563eb"
+					/>
+					<MetricGauge
+						label="Disk"
+						value={metric?.diskUsagePct ?? 0}
+						gradientFrom="#a78bfa"
+						gradientTo="#8b5cf6"
+					/>
+					<MetricGauge
+						label="Temp"
+						value={metric?.temperature ?? 0}
+						max={100}
+						unit="°C"
+						gradientFrom="#f97316"
+						gradientTo="#ef4444"
+					/>
+				</div>
+			</section>
+
+			<section class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+				<div class="bg-card p-6 rounded-2xl border border-border shadow-sm">
+					<div class="flex items-center gap-2 mb-6">
+						<Activity class="w-5 h-5 text-muted-foreground" />
+						<h3 class="text-lg font-semibold text-foreground">System Information</h3>
+					</div>
+					<div>
+						<InfoRow label="Operating System" value={serverQuery.data.osName ? `${serverQuery.data.osName} ${serverQuery.data.osVersion ?? ''}` : '—'} />
+						<InfoRow label="Kernel" value={serverQuery.data.kernel ?? '—'} />
+						<InfoRow label="Provider" value={serverQuery.data.provider ?? 'Laptop'} />
+						<InfoRow label="Location" value={serverQuery.data.location ?? 'Local'} />
+						<InfoRow label="Port" value={String(serverQuery.data.port)} last />
 					</div>
 				</div>
-			</div>
 
-			<div>
-				<div class="rounded-lg border border-border bg-card p-4">
-					<h2 class="text-sm font-medium text-muted-foreground mb-3">Resources</h2>
-					<div class="grid grid-cols-2 gap-2 text-sm">
-						<p class="text-muted-foreground">RAM</p>
-						<p>{metric ? formatBytes(metric.ramUsed) : '—'} / {metric ? formatBytes(metric.ramTotal) : '—'}</p>
-						<p class="text-muted-foreground">Disk</p>
-						<p>{metric ? formatBytes(metric.diskUsed) : '—'} / {metric ? formatBytes(metric.diskTotal) : '—'}</p>
-						<p class="text-muted-foreground">Uptime</p>
-						<p>{metric ? formatUptime(metric.uptime) : '—'}</p>
-						<p class="text-muted-foreground">Load (1m)</p>
-						<p>{metric?.loadAvg1m ? metric.loadAvg1m.toFixed(2) : '—'}</p>
-						<p class="text-muted-foreground">Temperature</p>
-						<p>{metric?.temperature ? `${metric.temperature.toFixed(1)}°C` : '—'}</p>
+				<div class="bg-card p-6 rounded-2xl border border-border shadow-sm">
+					<div class="flex items-center gap-2 mb-6">
+						<Zap class="w-5 h-5 text-muted-foreground" />
+						<h3 class="text-lg font-semibold text-foreground">Resource Details</h3>
+					</div>
+					<div>
+						<InfoRow label="RAM" value={metric ? `${formatBytes(metric.ramUsed)} / ${formatBytes(metric.ramTotal)}` : '—'} />
+						<InfoRow label="Disk" value={metric ? `${formatBytes(metric.diskUsed)} / ${formatBytes(metric.diskTotal)}` : '—'} />
+						<InfoRow label="Uptime" value={metric ? formatUptime(metric.uptime) : '—'} />
+						<InfoRow label="Load (1m)" value={metric?.loadAvg1m ? metric.loadAvg1m.toFixed(2) : '—'} />
+						<InfoRow label="Temperature" value={metric?.temperature ? `${metric.temperature.toFixed(1)}°C` : '—'} last />
 					</div>
 				</div>
-			</div>
+			</section>
 
-			<div class="col-span-2">
-				<div class="rounded-lg border border-border bg-card p-4">
-					<h2 class="text-sm font-medium text-muted-foreground mb-3">CPU History (24h)</h2>
+			<section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+				<div class="bg-card p-6 rounded-2xl border border-border shadow-sm">
+					<h3 class="text-lg font-semibold text-foreground mb-6">CPU History (24h)</h3>
 					<LineChart
 						data={chartData.map((d) => ({ timestamp: d.timestamp, value: d.cpu }))}
-						color="#4ade80"
+						color="#10b981"
 						label="CPU"
 						maxY={100}
-						height={160}
+						height={200}
 					/>
 				</div>
-			</div>
-
-			<div class="col-span-2">
-				<div class="rounded-lg border border-border bg-card p-4">
-					<h2 class="text-sm font-medium text-muted-foreground mb-3">RAM History (24h)</h2>
+				<div class="bg-card p-6 rounded-2xl border border-border shadow-sm">
+					<h3 class="text-lg font-semibold text-foreground mb-6">RAM History (24h)</h3>
 					<LineChart
 						data={chartData.map((d) => ({ timestamp: d.timestamp, value: d.ram }))}
-						color="#60a5fa"
+						color="#3b82f6"
 						label="RAM"
 						maxY={100}
-						height={160}
+						height={200}
 					/>
 				</div>
-			</div>
-
-			<div class="col-span-2">
-				<div class="rounded-lg border border-border bg-card p-4">
-					<h2 class="text-sm font-medium text-muted-foreground mb-3">Alerts</h2>
-					{#if alertsQuery.data && alertsQuery.data.length > 0}
-						<div class="space-y-2">
-							{#each alertsQuery.data as alert}
-								<div class="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
-									<div class="flex items-center gap-2">
-										<span class="text-xs uppercase font-mono {severityColor(alert.severity)}">
-											{alert.severity}
-										</span>
-										<span class="text-sm">{alert.message}</span>
-									</div>
-									<span class="text-xs text-muted-foreground/60">
-										{new Date(alert.createdAt).toLocaleString()}
-									</span>
-								</div>
-							{/each}
-						</div>
-					{:else}
-						<p class="text-sm text-muted-foreground">No alerts</p>
-					{/if}
-				</div>
-			</div>
+			</section>
 		</div>
 	</div>
 {/if}

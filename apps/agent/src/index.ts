@@ -1,4 +1,4 @@
-import { collectMetrics } from "./collector";
+import { collectMetrics, collectOsInfo } from "./collector";
 import { config } from "./config";
 import { Reporter } from "./reporter";
 
@@ -31,22 +31,36 @@ async function main() {
 
   console.log(`[agent] Collecting metrics every ${config.intervalMs}ms...`);
 
+  let osInfoSent = false;
+
   setInterval(async () => {
     try {
       const metrics = await collectMetrics();
-      await reporter.sendMetrics(metrics);
+      const payload = { ...metrics, osName: undefined as string | undefined, osVersion: undefined as string | undefined, kernel: undefined as string | undefined };
+
+      if (!osInfoSent) {
+        const osInfo = await collectOsInfo();
+        payload.osName = osInfo.osName;
+        payload.osVersion = osInfo.osVersion;
+        payload.kernel = osInfo.kernel;
+        osInfoSent = true;
+      }
+
+      await reporter.sendMetrics(payload);
     } catch (err) {
       console.error("[agent] Collection error:", err);
     }
   }, config.intervalMs);
 
   const metrics = await collectMetrics();
+  const osInfo = await collectOsInfo();
   console.log("[agent] Initial metrics collected:", {
     cpu: `${metrics.cpuUsage}%`,
     ram: `${metrics.ramUsagePct}%`,
     disk: `${metrics.diskUsagePct}%`,
     uptime: `${Math.floor(metrics.uptime / 3600)}h`,
     load: metrics.loadAvg1m,
+    os: `${osInfo.osName} ${osInfo.osVersion}`,
   });
 }
 

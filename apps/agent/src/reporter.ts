@@ -1,6 +1,5 @@
 import { networkInterfaces } from "node:os";
 import { config } from "./config";
-import type { SystemMetrics } from "./collector";
 
 export class Reporter {
   private registered = false;
@@ -41,7 +40,7 @@ export class Reporter {
     }
   }
 
-  async sendMetrics(metrics: SystemMetrics): Promise<boolean> {
+  async sendMetrics(metrics: Record<string, unknown>): Promise<boolean> {
     try {
       const url = `${config.serverUrl}/api/agent/heartbeat`;
       const response = await fetch(url, {

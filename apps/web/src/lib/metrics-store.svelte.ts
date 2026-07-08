@@ -34,6 +34,7 @@ function init() {
 
   subscribe("metric:update", (msg) => {
     const { serverId, data } = msg;
+    if (!serverId || !data) return;
     const newMap = new Map(metricsStore);
     newMap.set(serverId as string, data as unknown as LiveMetric);
     metricsStore = newMap;
@@ -41,6 +42,7 @@ function init() {
 
   subscribe("server:status", (msg) => {
     const { serverId, status } = msg;
+    if (!serverId || !status) return;
     const newMap = new Map(statusStore);
     newMap.set(serverId as string, status as string);
     statusStore = newMap;
@@ -52,38 +54,38 @@ function init() {
 async function poll() {
   try {
     const servers = await orpc.monitoring.serverList.call();
-    if (!servers || !Array.isArray(servers)) return;
+    if (!Array.isArray(servers)) return;
 
-    const newMetrics = new Map(metricsStore);
-    const newStatuses = new Map(statusStore);
+    const newMetrics = new Map<string, LiveMetric>();
+    const newStatuses = new Map<string, string>();
 
-    for (const server of servers) {
-      const m = server.metrics?.[0];
+    for (const server of servers as Array<Record<string, unknown>>) {
+      const m = (server as any).metrics?.[0];
       if (m) {
-        newMetrics.set(server.id, {
-          cpuUsage: m.cpuUsage,
-          cpuCores: m.cpuCores,
-          ramUsagePct: m.ramUsagePct,
-          ramTotal: Number(m.ramTotal),
-          ramUsed: Number(m.ramUsed),
-          diskUsagePct: m.diskUsagePct,
-          diskTotal: Number(m.diskTotal),
-          diskUsed: Number(m.diskUsed),
-          networkRx: Number(m.networkRx),
-          networkTx: Number(m.networkTx),
-          networkRxSpeed: m.networkRxSpeed,
-          networkTxSpeed: m.networkTxSpeed,
-          uptime: Number(m.uptime),
-          loadAvg1m: m.loadAvg1m,
-          temperature: m.temperature,
-          timestamp: String(m.timestamp),
+        newMetrics.set(server.id as string, {
+          cpuUsage: m.cpuUsage ?? 0,
+          cpuCores: m.cpuCores ?? 0,
+          ramUsagePct: m.ramUsagePct ?? 0,
+          ramTotal: Number(m.ramTotal ?? 0),
+          ramUsed: Number(m.ramUsed ?? 0),
+          diskUsagePct: m.diskUsagePct ?? 0,
+          diskTotal: Number(m.diskTotal ?? 0),
+          diskUsed: Number(m.diskUsed ?? 0),
+          networkRx: Number(m.networkRx ?? 0),
+          networkTx: Number(m.networkTx ?? 0),
+          networkRxSpeed: (m.networkRxSpeed ?? null) as number | null,
+          networkTxSpeed: (m.networkTxSpeed ?? null) as number | null,
+          uptime: Number(m.uptime ?? 0),
+          loadAvg1m: (m.loadAvg1m ?? null) as number | null,
+          temperature: (m.temperature ?? null) as number | null,
+          timestamp: String(m.timestamp ?? ""),
         });
       }
-      newStatuses.set(server.id, server.status);
+      newStatuses.set(server.id as string, server.status as string);
     }
 
-    metricsStore = newMetrics;
-    statusStore = newStatuses;
+    if (newMetrics.size > 0) metricsStore = newMetrics;
+    if (newStatuses.size > 0) statusStore = newStatuses;
   } catch {}
 }
 

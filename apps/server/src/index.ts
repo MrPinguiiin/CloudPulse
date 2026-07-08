@@ -139,7 +139,13 @@ app.post("/api/agent/heartbeat", async (c) => {
 
   await prisma.server.update({
     where: { id: server.id },
-    data: { status: "ONLINE", lastSeenAt: new Date() },
+    data: {
+      status: "ONLINE",
+      lastSeenAt: new Date(),
+      osName: body.osName ?? undefined,
+      osVersion: body.osVersion ?? undefined,
+      kernel: body.kernel ?? undefined,
+    },
   });
 
   broadcastMetric(server.id, serializeBigInt(metric) as Record<string, unknown>);

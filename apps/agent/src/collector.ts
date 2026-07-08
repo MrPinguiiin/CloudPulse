@@ -77,3 +77,12 @@ export async function collectMetrics(): Promise<SystemMetrics> {
     timestamp: now.toISOString(),
   };
 }
+
+export async function collectOsInfo(): Promise<{ osName: string; osVersion: string; kernel: string }> {
+  const [osInfo] = await Promise.all([si.osInfo()]);
+  return {
+    osName: osInfo.distro,
+    osVersion: osInfo.release,
+    kernel: osInfo.kernel,
+  };
+}
