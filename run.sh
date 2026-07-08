@@ -40,9 +40,33 @@ if [ ! -d "node_modules" ]; then
     echo -e "${GREEN}Dependensi berhasil diinstall!${NC}"
 fi
 
-# 4. Jalankan server dan client menggunakan Turborepo
+# 4. Deteksi IP lokal untuk agent
+LOCAL_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+if [ -z "$LOCAL_IP" ]; then
+    LOCAL_IP="127.0.0.1" 
+fi
+
+# 5. Baca atau generate AGENT_TOKEN dari env / database
+if [ -z "$AGENT_TOKEN" ]; then
+    echo -e "${YELLOW}AGENT_TOKEN belum di-set.${NC}"
+    echo -e "${YELLOW}Untuk menjalankan agent, set terlebih dahulu:${NC}"
+    echo -e "${YELLOW}  export AGENT_TOKEN=<token_dari_dashboard>${NC}"
+    echo ""
+fi
+
+# 6. Jalankan server dan client menggunakan Turborepo
 echo -e "${GREEN}Menjalankan server dan client dalam mode development...${NC}"
 echo -e "${YELLOW}Tekan Ctrl+C untuk menghentikan server dan client.${NC}"
 echo -e "${BLUE}-----------------------------------------------${NC}"
 
+if [ -n "$AGENT_TOKEN" ]; then
+    echo -e "${GREEN}Agent akan dijalankan otomatis dengan token: ${AGENT_TOKEN:0:8}...${NC}"
+    bun run apps/agent/src/index.ts &
+    AGENT_PID=$!
+fi
+
 bun dev
+
+if [ -n "$AGENT_PID" ]; then
+    kill $AGENT_PID 2>/dev/null
+fi

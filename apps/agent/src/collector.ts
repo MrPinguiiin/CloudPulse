@@ -51,11 +51,14 @@ export async function collectMetrics(): Promise<SystemMetrics> {
   ]);
 
   const mainDisk = disk[0];
-  const mainNet = netStats[0];
+
+  const realNet = (netStats ?? []).find(
+    (n) => n.iface !== "lo" && !n.iface.startsWith("vboxnet") && !n.iface.startsWith("docker") && !n.iface.startsWith("br-")
+  ) ?? netStats.find((n) => n.iface !== "lo") ?? netStats[0];
 
   const now = Date.now();
-  const currentRx = mainNet?.rx_bytes ?? 0;
-  const currentTx = mainNet?.tx_bytes ?? 0;
+  const currentRx = realNet?.rx_bytes ?? 0;
+  const currentTx = realNet?.tx_bytes ?? 0;
 
   const elapsed = (now - prevTime) / 1000;
   const rxDelta = currentRx - prevRx;
