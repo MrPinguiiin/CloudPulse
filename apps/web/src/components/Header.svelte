@@ -1,8 +1,18 @@
 <script lang="ts">
 	import Button from "$lib/components/ui/button.svelte";
+	import DropdownMenuRoot from "$lib/components/ui/dropdown-menu/dropdown-menu.svelte";
+	import DropdownMenuTrigger from "$lib/components/ui/dropdown-menu/dropdown-menu-trigger.svelte";
+	import DropdownMenuContent from "$lib/components/ui/dropdown-menu/dropdown-menu-content.svelte";
+	import DropdownMenuItem from "$lib/components/ui/dropdown-menu/dropdown-menu-item.svelte";
 	import { authClient } from "$lib/auth-client";
 	import { goto } from "$app/navigation";
-	import { Activity } from "lucide-svelte";
+	import { setMode, resetMode } from "mode-watcher";
+	import {
+		Activity,
+		Sun,
+		Moon,
+		Monitor,
+	} from "lucide-svelte";
 
 	const sessionQuery = authClient.useSession();
 
@@ -36,6 +46,30 @@
 		</nav>
 
 		<div class="ml-auto flex items-center gap-2">
+			<DropdownMenuRoot>
+				<DropdownMenuTrigger
+					class="flex size-8 items-center justify-center rounded-md border border-border/40 bg-card/50 text-foreground/60 transition-colors duration-200 hover:bg-accent hover:text-foreground"
+				>
+					<Sun class="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+					<Moon class="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+					<span class="sr-only">Toggle theme</span>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent align="end" class="min-w-[8rem]">
+					<DropdownMenuItem onclick={() => setMode("light")} class="cursor-pointer">
+						<Sun class="size-4" />
+						Light
+					</DropdownMenuItem>
+					<DropdownMenuItem onclick={() => setMode("dark")} class="cursor-pointer">
+						<Moon class="size-4" />
+						Dark
+					</DropdownMenuItem>
+					<DropdownMenuItem onclick={() => resetMode()} class="cursor-pointer">
+						<Monitor class="size-4" />
+						System
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenuRoot>
+
 			{#if $sessionQuery.isPending}
 				<div class="h-8 w-20 animate-pulse rounded bg-muted"></div>
 			{:else if $sessionQuery.data?.user}

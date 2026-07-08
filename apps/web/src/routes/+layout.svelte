@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { QueryClientProvider } from "@tanstack/svelte-query";
 	import { SvelteQueryDevtools } from "@tanstack/svelte-query-devtools";
+	import { ModeWatcher } from "mode-watcher";
 	import "../app.css";
 	import { queryClient } from "$lib/orpc";
 	import Header from "../components/Header.svelte";
@@ -9,6 +10,7 @@
 	const { children } = $props();
 </script>
 
+<ModeWatcher />
 <QueryClientProvider client={queryClient}>
 	<div class="relative flex min-h-screen flex-col bg-background">
 		<Header />
