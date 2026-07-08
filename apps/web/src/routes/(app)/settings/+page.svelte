@@ -6,12 +6,7 @@
 	import Button from "$lib/components/ui/button.svelte";
 	import Input from "$lib/components/ui/input.svelte";
 	import Label from "$lib/components/ui/label.svelte";
-	import Card from "$lib/components/ui/card.svelte";
-	import CardHeader from "$lib/components/ui/card-header.svelte";
-	import CardTitle from "$lib/components/ui/card-title.svelte";
-	import CardDescription from "$lib/components/ui/card-description.svelte";
-	import CardContent from "$lib/components/ui/card-content.svelte";
-	import { Copy, Check } from "lucide-svelte";
+	import { Copy, Check, Settings, Key } from "lucide-svelte";
 
 	const sessionQuery = authClient.useSession();
 	const serverList = createQuery(() => orpc.monitoring.serverList.queryOptions());
@@ -85,113 +80,111 @@
 		<p class="text-muted-foreground">Redirecting...</p>
 	</div>
 {:else}
-	<div class="container mx-auto max-w-6xl px-4 py-6">
-		<div class="mb-6">
-			<h1 class="text-2xl font-semibold">Settings</h1>
-			<p class="text-sm text-muted-foreground">
-				Alert thresholds and server configuration
-			</p>
-		</div>
+	<div class="min-h-full bg-gradient-to-br from-background to-muted/30 p-8">
+		<div class="mx-auto max-w-7xl">
+			<div class="mb-8">
+				<h1 class="text-3xl font-bold text-foreground mb-2">Settings</h1>
+				<p class="text-sm text-muted-foreground">Alert thresholds and server configuration</p>
+			</div>
 
-		<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-			<Card>
-				<CardHeader>
-					<CardTitle>Alert Thresholds</CardTitle>
-					<CardDescription>
-						Configure per-server CPU, RAM, and disk alert thresholds.
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<div class="space-y-4">
-						<div class="space-y-2">
-							<Label for="alert-server">Server</Label>
-							<select
-								id="alert-server"
-								bind:value={selectedServerId}
-								class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-							>
-								<option value="">Select a server</option>
-								{#each serverList.data ?? [] as server (server.id)}
-									<option value={server.id}>{server.hostname}</option>
-								{/each}
-							</select>
-						</div>
-
-						{#if selectedServerId}
-							<div class="space-y-3 pt-2">
-								<div class="space-y-1.5">
-									<Label for="cpu-threshold">CPU Threshold (%)</Label>
-									<Input id="cpu-threshold" type="number" min="0" max="100" bind:value={cpuThreshold} />
-								</div>
-								<div class="space-y-1.5">
-									<Label for="ram-threshold">RAM Threshold (%)</Label>
-									<Input id="ram-threshold" type="number" min="0" max="100" bind:value={ramThreshold} />
-								</div>
-								<div class="space-y-1.5">
-									<Label for="disk-threshold">Disk Threshold (%)</Label>
-									<Input id="disk-threshold" type="number" min="0" max="100" bind:value={diskThreshold} />
-								</div>
-								<div class="flex items-center gap-2 pt-1">
-									<input id="alerts-enabled" type="checkbox" bind:checked={enabled}
-										class="size-4 rounded border-input" />
-									<Label for="alerts-enabled">Enable alerts</Label>
-								</div>
-								<div class="flex items-center gap-2 pt-2">
-									<Button onclick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-										{saveMutation.isPending ? "Saving..." : "Save"}
-									</Button>
-									{#if savedMessage}
-										<span class="text-xs text-emerald-400">{savedMessage}</span>
-									{/if}
-								</div>
-							</div>
-						{:else}
-							<div class="flex items-center justify-center py-6">
-								<p class="text-sm text-muted-foreground">Select a server to configure alerts.</p>
-							</div>
-						{/if}
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+				<div class="bg-card rounded-2xl border border-border shadow-sm">
+					<div class="p-6 border-b border-border flex items-center gap-2">
+						<Settings class="w-5 h-5 text-muted-foreground" />
+						<h3 class="text-lg font-semibold text-foreground">Alert Thresholds</h3>
 					</div>
-				</CardContent>
-			</Card>
+					<div class="p-6">
+						<div class="space-y-4">
+							<div class="space-y-2">
+								<Label for="alert-server">Server</Label>
+								<select
+									id="alert-server"
+									bind:value={selectedServerId}
+									class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+								>
+									<option value="">Select a server</option>
+									{#each serverList.data ?? [] as server (server.id)}
+										<option value={server.id}>{server.hostname}</option>
+									{/each}
+								</select>
+							</div>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>Agent Tokens</CardTitle>
-					<CardDescription>
-						Regenerate and copy agent tokens for your servers.
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<div class="space-y-4">
-						<div class="space-y-2">
-							<Label for="token-server">Server</Label>
-							<select
-								id="token-server"
-								bind:value={agentTokenServerId}
-								class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-							>
-								<option value="">Select a server</option>
-								{#each serverList.data ?? [] as server (server.id)}
-									<option value={server.id}>{server.hostname}</option>
-								{/each}
-							</select>
-						</div>
-						{#if agentTokenServerId}
-							<Button variant="outline" onclick={() => tokenMutation.mutate()} disabled={tokenMutation.isPending} class="w-full">
-								{tokenMutation.isPending ? "Generating..." : "Regenerate Token"}
-							</Button>
-							{#if agentTokenValue}
-								<div class="flex items-center gap-2 rounded-lg border border-border bg-card p-3">
-									<code class="flex-1 break-all font-mono text-xs">{agentTokenValue}</code>
-									<Button variant="ghost" size="icon" onclick={copyToken}>
-										{#if tokenCopied}<Check class="size-4 text-emerald-400" />{:else}<Copy class="size-4" />{/if}
-									</Button>
+							{#if selectedServerId}
+								<div class="space-y-3 pt-2">
+									<div class="grid grid-cols-3 gap-3">
+										<div class="space-y-1.5">
+											<Label for="cpu-threshold">CPU %</Label>
+											<Input id="cpu-threshold" type="number" min="0" max="100" bind:value={cpuThreshold} />
+										</div>
+										<div class="space-y-1.5">
+											<Label for="ram-threshold">RAM %</Label>
+											<Input id="ram-threshold" type="number" min="0" max="100" bind:value={ramThreshold} />
+										</div>
+										<div class="space-y-1.5">
+											<Label for="disk-threshold">Disk %</Label>
+											<Input id="disk-threshold" type="number" min="0" max="100" bind:value={diskThreshold} />
+										</div>
+									</div>
+									<div class="flex items-center gap-2 pt-1">
+										<input id="alerts-enabled" type="checkbox" bind:checked={enabled}
+											class="size-4 rounded border-input accent-primary" />
+										<Label for="alerts-enabled">Enable alerts</Label>
+									</div>
+									<div class="flex items-center gap-2 pt-2">
+										<Button onclick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+											{saveMutation.isPending ? "Saving..." : "Save"}
+										</Button>
+										{#if savedMessage}
+											<span class="text-xs text-primary">{savedMessage}</span>
+										{/if}
+									</div>
+								</div>
+							{:else}
+								<div class="flex items-center justify-center py-8">
+									<p class="text-sm text-muted-foreground">Select a server to configure alerts.</p>
 								</div>
 							{/if}
-						{/if}
+						</div>
 					</div>
-				</CardContent>
-			</Card>
+				</div>
+
+				<div class="bg-card rounded-2xl border border-border shadow-sm">
+					<div class="p-6 border-b border-border flex items-center gap-2">
+						<Key class="w-5 h-5 text-muted-foreground" />
+						<h3 class="text-lg font-semibold text-foreground">Agent Tokens</h3>
+					</div>
+					<div class="p-6">
+						<div class="space-y-4">
+							<div class="space-y-2">
+								<Label for="token-server">Server</Label>
+								<select
+									id="token-server"
+									bind:value={agentTokenServerId}
+									class="flex h-9 w-full rounded-lg border border-border bg-background px-3 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+								>
+									<option value="">Select a server</option>
+									{#each serverList.data ?? [] as server (server.id)}
+										<option value={server.id}>{server.hostname}</option>
+									{/each}
+								</select>
+							</div>
+							{#if agentTokenServerId}
+								<Button variant="outline" onclick={() => tokenMutation.mutate()} disabled={tokenMutation.isPending} class="w-full rounded-lg">
+									{tokenMutation.isPending ? "Generating..." : "Regenerate Token"}
+								</Button>
+								{#if agentTokenValue}
+									<div class="flex items-center gap-2 rounded-lg border border-border bg-muted/30 p-3">
+										<code class="flex-1 break-all font-mono text-xs">{agentTokenValue}</code>
+										<Button variant="ghost" size="icon" onclick={copyToken}>
+											{#if tokenCopied}<Check class="size-4 text-primary" />{:else}<Copy class="size-4" />{/if}
+										</Button>
+									</div>
+								{/if}
+							{/if}
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 {/if}
