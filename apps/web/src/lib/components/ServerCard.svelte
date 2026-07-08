@@ -52,29 +52,29 @@
   }
 
   function cpuColor(usage: number): string {
-    if (usage > 90) return "text-red-400";
-    if (usage > 70) return "text-yellow-400";
-    return "text-green-400";
+    if (usage > 90) return "text-destructive";
+    if (usage > 70) return "text-amber-400";
+    return "text-emerald-400";
   }
 
   function ramColor(usage: number): string {
-    if (usage > 90) return "text-red-400";
-    if (usage > 75) return "text-yellow-400";
+    if (usage > 90) return "text-destructive";
+    if (usage > 75) return "text-amber-400";
     return "text-blue-400";
   }
 </script>
 
 <button
-  class="rounded-lg border border-neutral-800 bg-neutral-900 p-4 text-left transition-colors hover:border-neutral-700 hover:bg-neutral-800/50 w-full cursor-pointer"
+  class="rounded-lg border border-border bg-card p-4 text-left transition-colors hover:border-primary/30 hover:bg-muted/50 w-full cursor-pointer"
   onclick={() => goto(`/servers/${server.id}`)}
 >
   <div class="flex items-center justify-between mb-3">
     <div>
       <h3 class="font-medium">{server.hostname}</h3>
-      <p class="text-xs text-neutral-500">{server.ip}</p>
+      <p class="text-xs text-muted-foreground">{server.ip}</p>
     </div>
     <div class="flex items-center gap-2">
-      <span class="text-[10px] px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400 uppercase">
+      <span class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase">
         {server.type}
       </span>
       <ServerStatusBadge status={(server.status as "ONLINE" | "OFFLINE")} size="sm" />
@@ -87,27 +87,27 @@
         <p class="text-lg font-semibold tabular-nums {cpuColor(latestMetric.cpuUsage)}">
           {latestMetric.cpuUsage.toFixed(1)}%
         </p>
-        <p class="text-[10px] text-neutral-500">CPU</p>
+        <p class="text-[10px] text-muted-foreground">CPU</p>
       </div>
       <div>
         <p class="text-lg font-semibold tabular-nums {ramColor(latestMetric.ramUsagePct)}">
           {latestMetric.ramUsagePct.toFixed(1)}%
         </p>
-        <p class="text-[10px] text-neutral-500">RAM</p>
+        <p class="text-[10px] text-muted-foreground">RAM</p>
       </div>
       <div>
-        <p class="text-lg font-semibold tabular-nums text-neutral-300">
+        <p class="text-lg font-semibold tabular-nums text-foreground">
           {latestMetric.diskUsagePct.toFixed(1)}%
         </p>
-        <p class="text-[10px] text-neutral-500">Disk</p>
+        <p class="text-[10px] text-muted-foreground">Disk</p>
       </div>
     </div>
 
-    <div class="mt-2 flex justify-between text-[10px] text-neutral-600">
+    <div class="mt-2 flex justify-between text-[10px] text-muted-foreground/60">
       <span>Net: {formatBytes(latestMetric.networkRx)}↓ {formatBytes(latestMetric.networkTx)}↑</span>
       <span>Up: {formatUptime(latestMetric.uptime)}</span>
     </div>
   {:else}
-    <p class="text-sm text-neutral-600">No metrics yet</p>
+    <p class="text-sm text-muted-foreground">No metrics yet</p>
   {/if}
 </button>

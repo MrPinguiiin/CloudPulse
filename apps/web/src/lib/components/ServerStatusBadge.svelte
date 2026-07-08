@@ -7,9 +7,9 @@
   const { status, size = "md" }: Props = $props();
 
   const colors: Record<string, string> = {
-    ONLINE: "bg-green-500",
-    OFFLINE: "bg-neutral-500",
-    ERROR: "bg-red-500",
+    ONLINE: "bg-emerald-500",
+    OFFLINE: "bg-muted-foreground",
+    ERROR: "bg-destructive",
   };
 
   const labels: Record<string, string> = {
@@ -28,5 +28,5 @@
     ></span>
     <span class="relative inline-flex rounded-full h-full w-full {colors[status]}"></span>
   </span>
-  <span class="text-xs text-neutral-400">{labels[status]}</span>
+  <span class="text-xs text-muted-foreground">{labels[status]}</span>
 </div>

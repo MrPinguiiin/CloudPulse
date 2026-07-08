@@ -21,43 +21,33 @@
 
   const pathData = $derived.by(() => {
     if (data.length < 2) return "";
-
     const points = data.map((d, i) => {
       const x = padding.left + (i / (data.length - 1)) * innerWidth;
       const y = padding.top + innerHeight - (Math.min(d.value, maxY) / maxY) * innerHeight;
       return `${i === 0 ? "M" : "L"} ${x} ${y}`;
     });
-
     return points.join(" ");
   });
 
   const areaData = $derived.by(() => {
     if (data.length < 2) return "";
-
     const firstX = padding.left;
     const lastX = padding.left + innerWidth;
     const bottomY = padding.top + innerHeight;
-
-    let area = pathData;
-    area += ` L ${lastX} ${bottomY}`;
-    area += ` L ${firstX} ${bottomY}`;
-    area += " Z";
-
-    return area;
+    return `${pathData} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z`;
   });
 
   const lastLabel = $derived.by(() => {
     if (data.length === 0) return "";
-    const last = data[data.length - 1]!;
-    return `${last.value.toFixed(1)}%`;
+    return `${data[data.length - 1]!.value.toFixed(1)}%`;
   });
 </script>
 
 <div class="relative">
   {#if label || lastLabel}
     <div class="flex justify-between mb-1">
-      <span class="text-xs text-neutral-500">{label}</span>
-      <span class="text-xs font-mono tabular-nums text-neutral-400">{lastLabel}</span>
+      <span class="text-xs text-muted-foreground">{label}</span>
+      <span class="text-xs font-mono tabular-nums text-muted-foreground">{lastLabel}</span>
     </div>
   {/if}
   <svg viewBox={`0 0 ${chartWidth} ${height}`} class="w-full" style="height: {height}px">
@@ -71,10 +61,9 @@
       <path d={areaData} fill={`url(#areaGrad-${label})`} />
       <path d={pathData} fill="none" stroke={color} stroke-width="2" />
     {/if}
-
     {#if data.length === 0}
       <text x={chartWidth / 2} y={height / 2} text-anchor="middle"
-        class="text-xs fill-neutral-600">No data</text>
+        class="text-xs fill-muted-foreground">No data</text>
     {/if}
   </svg>
 </div>

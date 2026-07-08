@@ -1,4 +1,5 @@
 import { subscribe } from "./ws";
+import { orpc } from "./orpc";
 
 interface LiveMetric {
   cpuUsage: number;
@@ -19,17 +20,13 @@ interface LiveMetric {
   timestamp: string;
 }
 
-interface ServerStatus {
-  serverId: string;
-  status: string;
-}
-
 type MetricMap = Map<string, LiveMetric>;
 type StatusMap = Map<string, string>;
 
 let metricsStore = $state<MetricMap>(new Map());
 let statusStore = $state<StatusMap>(new Map());
 let initialized = $state(false);
+let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 function init() {
   if (initialized) return;
@@ -48,6 +45,52 @@ function init() {
     newMap.set(serverId as string, status as string);
     statusStore = newMap;
   });
+
+  startPolling();
+}
+
+async function poll() {
+  try {
+    const servers = await orpc.monitoring.serverList.call();
+    if (!servers || !Array.isArray(servers)) return;
+
+    const newMetrics = new Map(metricsStore);
+    const newStatuses = new Map(statusStore);
+
+    for (const server of servers) {
+      const m = server.metrics?.[0];
+      if (m) {
+        newMetrics.set(server.id, {
+          cpuUsage: m.cpuUsage,
+          cpuCores: m.cpuCores,
+          ramUsagePct: m.ramUsagePct,
+          ramTotal: Number(m.ramTotal),
+          ramUsed: Number(m.ramUsed),
+          diskUsagePct: m.diskUsagePct,
+          diskTotal: Number(m.diskTotal),
+          diskUsed: Number(m.diskUsed),
+          networkRx: Number(m.networkRx),
+          networkTx: Number(m.networkTx),
+          networkRxSpeed: m.networkRxSpeed,
+          networkTxSpeed: m.networkTxSpeed,
+          uptime: Number(m.uptime),
+          loadAvg1m: m.loadAvg1m,
+          temperature: m.temperature,
+          timestamp: String(m.timestamp),
+        });
+      }
+      newStatuses.set(server.id, server.status);
+    }
+
+    metricsStore = newMetrics;
+    statusStore = newStatuses;
+  } catch {}
+}
+
+function startPolling() {
+  if (pollTimer) return;
+  poll();
+  pollTimer = setInterval(poll, 1000);
 }
 
 export function useLiveMetrics() {

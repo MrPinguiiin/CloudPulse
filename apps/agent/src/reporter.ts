@@ -11,7 +11,7 @@ export class Reporter {
     if (this.registered) return true;
 
     try {
-      const url = `${config.serverUrl}/rpc/monitoring.agentRegister`;
+      const url = `${config.serverUrl}/api/agent/register`;
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -43,7 +43,7 @@ export class Reporter {
 
   async sendMetrics(metrics: SystemMetrics): Promise<boolean> {
     try {
-      const url = `${config.serverUrl}/rpc/monitoring.agentHeartbeat`;
+      const url = `${config.serverUrl}/api/agent/heartbeat`;
       const response = await fetch(url, {
         method: "POST",
         headers: {

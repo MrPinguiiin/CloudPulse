@@ -7,20 +7,21 @@
     color?: string;
   }
 
-  const { label, value, max = 100, unit = "%", color = "text-green-400" }: Props = $props();
+  const { label, value, max = 100, unit = "%", color = "text-emerald-400" }: Props = $props();
 
   const clamped = $derived(Math.min(Math.max(value, 0), max));
   const pct = $derived(max > 0 ? (clamped / max) * 100 : 0);
 
   const gaugeColors: Record<string, string> = {
-    "text-green-400": "#4ade80",
+    "text-emerald-400": "#4ade80",
     "text-blue-400": "#60a5fa",
-    "text-yellow-400": "#facc15",
-    "text-red-400": "#f87171",
+    "text-amber-400": "#facc15",
+    "text-destructive": "#f87171",
+    "text-violet-400": "#c084fc",
     "text-purple-400": "#c084fc",
   };
   const strokeColor = $derived(gaugeColors[color] ?? "#4ade80");
-  const bgColor = "#27272a";
+  const trackColor = "var(--color-muted)";
 
   const radius = 40;
   const circumference = 2 * Math.PI * radius;
@@ -32,7 +33,8 @@
     <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
       <circle
         cx="50" cy="50" r={radius}
-        fill="none" stroke={bgColor} stroke-width="8"
+        fill="none" stroke="currentColor" stroke-width="8"
+        class="text-muted/30"
       />
       <circle
         cx="50" cy="50" r={radius}
@@ -49,5 +51,5 @@
       </span>
     </div>
   </div>
-  <span class="text-xs text-neutral-400">{label}</span>
+  <span class="text-xs text-muted-foreground">{label}</span>
 </div>
