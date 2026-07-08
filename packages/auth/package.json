@@ -1,0 +1,24 @@
+{
+  "name": "@monitoring-server/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@monitoring-server/db": "workspace:*",
+    "@monitoring-server/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@monitoring-server/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}
