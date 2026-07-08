@@ -107,9 +107,9 @@
 
 		try {
 			const urls = [
-				'https://speed.cloudflare.com/__down?bytes=26214400',
-				'https://speed.cloudflare.com/__down?bytes=26214400',
-				'https://speed.cloudflare.com/__down?bytes=26214400',
+				'https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js',
+				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
+				'https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js',
 			];
 
 			for (const url of urls) {
@@ -120,8 +120,10 @@
 				let lastUpdate = startTime;
 				let lastBytes = 0;
 
-				const response = await fetch(url + '&r=' + Math.random(), { cache: 'no-store' });
-				const reader = response.body!.getReader();
+				const response = await fetch(url + '?r=' + Math.random(), { cache: 'no-store' });
+				if (!response.ok || !response.body) continue;
+
+				const reader = response.body.getReader();
 
 				while (true) {
 					const { done, value } = await reader.read();
@@ -130,7 +132,7 @@
 					bytesReceived += value?.length ?? 0;
 					const now = performance.now();
 					const deltaMs = now - lastUpdate;
-					if (deltaMs > 100) {
+					if (deltaMs > 50) {
 						const deltaBytes = bytesReceived - lastBytes;
 						const bitsPerSec = (deltaBytes * 8) / (deltaMs / 1000);
 						speedLiveMbps = bitsPerSec / 1e6;
@@ -143,7 +145,8 @@
 				const avgMbps = (bytesReceived * 8 / (totalMs / 1000)) / 1e6;
 				peakMbps = Math.max(peakMbps, avgMbps);
 			}
-		} catch {
+		} catch (e) {
+			console.error('Speed test error:', e);
 			speedTestError = true;
 		}
 
@@ -225,50 +228,6 @@
 						<div class="rounded-lg bg-muted/20 p-3 flex justify-between text-xs text-muted-foreground">
 							<span>Total RX: {metric ? formatBytes(metric.networkRx) : '—'}</span>
 							<span>Total TX: {metric ? formatBytes(metric.networkTx) : '—'}</span>
-						</div>
-					</div>
-
-					<div class="bg-card p-6 rounded-2xl border border-border shadow-sm">
-						<div class="flex items-center gap-2 mb-4">
-							<Gauge class="w-5 h-5 text-amber-400" />
-							<h3 class="text-lg font-semibold text-foreground">Speed Test</h3>
-						</div>
-						<div class="flex flex-col items-center justify-center min-h-[140px]">
-							{#if speedTestRunning}
-								<div class="w-full space-y-3">
-									<div class="h-2 w-full overflow-hidden rounded-full bg-muted">
-										<div class="h-full rounded-full bg-gradient-to-r from-sky-500 to-blue-500 animate-pulse transition-all" style="width: 75%"></div>
-									</div>
-									<div class="text-center font-mono text-3xl font-bold tabular-nums text-sky-400 transition-all">
-										↓ {speedLiveMbps.toFixed(1)}
-									</div>
-									<div class="text-center text-xs text-muted-foreground">Mbps</div>
-									{#if peakMbps > 0}
-										<div class="text-center text-[11px] text-muted-foreground/50">peak: {peakMbps.toFixed(1)} Mbps</div>
-									{/if}
-								</div>
-							{:else if speedTestDone}
-								<div class="text-center space-y-2">
-									<div class="text-center font-mono text-3xl font-bold tabular-nums text-sky-400">
-										↓ {peakMbps.toFixed(1)}
-									</div>
-									<div class="text-xs text-muted-foreground">Mbps</div>
-									{#if speedTestError}
-										<div class="text-xs text-destructive">Test failed — try again</div>
-									{/if}
-								</div>
-							{:else}
-								<div class="text-center space-y-3">
-									<div class="text-4xl text-muted-foreground/30">—</div>
-									<div class="text-xs text-muted-foreground">Test your internet speed</div>
-								</div>
-							{/if}
-							<div class="mt-4">
-								<Button size="sm" onclick={runSpeedTest} disabled={speedTestRunning}>
-									<Gauge class="size-3.5 mr-1" />
-									{speedTestRunning ? 'Testing...' : speedTestDone ? 'Retest' : 'Run Speed Test'}
-								</Button>
-							</div>
 						</div>
 					</div>
 				</div>
