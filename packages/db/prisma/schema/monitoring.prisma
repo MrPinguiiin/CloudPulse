@@ -1,0 +1,101 @@
+enum ServerType {
+  LOCAL
+  CLOUD
+}
+
+enum MonitoringStatus {
+  ONLINE
+  OFFLINE
+  ERROR
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model Server {
+  id           String           @id @default(uuid())
+  hostname     String
+  ip           String
+  port         Int              @default(9170)
+  osName       String?          @map("os_name")
+  osVersion    String?          @map("os_version")
+  kernel       String?
+  provider     String?
+  location     String?
+  type         ServerType       @default(LOCAL)
+  agentToken   String           @unique @map("agent_token")
+  status       MonitoringStatus @default(OFFLINE)
+  lastSeenAt   DateTime?        @map("last_seen_at")
+  userId       String           @map("user_id")
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+  metrics      Metric[]
+  alerts       Alert[]
+  alertConfig  AlertConfig?
+
+  @@index([userId])
+  @@index([status])
+  @@map("server")
+}
+
+model Metric {
+  id             String   @id @default(uuid())
+  serverId       String   @map("server_id")
+  server         Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  cpuUsage       Float    @map("cpu_usage")
+  cpuCores       Int      @map("cpu_cores")
+  cpuModel       String?  @map("cpu_model")
+  ramTotal       BigInt   @map("ram_total")
+  ramUsed        BigInt   @map("ram_used")
+  ramFree        BigInt   @map("ram_free")
+  ramUsagePct    Float    @map("ram_usage_pct")
+  diskTotal      BigInt   @map("disk_total")
+  diskUsed       BigInt   @map("disk_used")
+  diskFree       BigInt   @map("disk_free")
+  diskUsagePct   Float    @map("disk_usage_pct")
+  networkRx      BigInt   @map("network_rx")
+  networkTx      BigInt   @map("network_tx")
+  networkRxSpeed Float?   @map("network_rx_speed")
+  networkTxSpeed Float?   @map("network_tx_speed")
+  uptime         BigInt
+  loadAvg1m      Float?   @map("load_avg_1m")
+  loadAvg5m      Float?   @map("load_avg_5m")
+  loadAvg15m     Float?   @map("load_avg_15m")
+  temperature    Float?
+  timestamp      DateTime @default(now())
+
+  @@index([serverId, timestamp])
+  @@map("metric")
+}
+
+model Alert {
+  id           String        @id @default(uuid())
+  serverId     String        @map("server_id")
+  server       Server        @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  type         String
+  severity     AlertSeverity
+  threshold    Float
+  currentValue Float         @map("current_value")
+  message      String
+  resolvedAt   DateTime?     @map("resolved_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  @@index([serverId])
+  @@map("alert")
+}
+
+model AlertConfig {
+  id            String  @id @default(uuid())
+  serverId      String  @unique @map("server_id")
+  server        Server  @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  cpuThreshold  Float   @default(80) @map("cpu_threshold")
+  ramThreshold  Float   @default(85) @map("ram_threshold")
+  diskThreshold Float   @default(90) @map("disk_threshold")
+  enabled       Boolean @default(true)
+
+  @@map("alert_config")
+}

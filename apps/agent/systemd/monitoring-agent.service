@@ -1,0 +1,18 @@
+[Unit]
+Description=CloudPulse Monitoring Agent
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/cloud-pulse-agent
+ExecStart=/usr/bin/node dist/index.mjs
+Restart=always
+RestartSec=10
+Environment=AGENT_SERVER_URL=http://localhost:3000
+Environment=AGENT_TOKEN=YOUR_AGENT_TOKEN_HERE
+Environment=AGENT_TYPE=LOCAL
+Environment=AGENT_INTERVAL=5000
+
+[Install]
+WantedBy=multi-user.target

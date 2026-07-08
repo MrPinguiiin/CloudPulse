@@ -1,0 +1,7 @@
+{
+  "extends": "@monitoring-server/config/tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "dist"
+  }
+}

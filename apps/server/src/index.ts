@@ -1,5 +1,6 @@
 import { createContext } from "@monitoring-server/api/context";
 import { appRouter } from "@monitoring-server/api/routers/index";
+import { addWsClient, removeWsClient } from "@monitoring-server/api/routers/monitoring";
 import { auth } from "@monitoring-server/auth";
 import { env } from "@monitoring-server/env/server";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
@@ -10,6 +11,7 @@ import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import type { ServerWebSocket } from "bun";
 
 const app = new Hono();
 
@@ -48,6 +50,10 @@ export const rpcHandler = new RPCHandler(appRouter, {
 });
 
 app.use("/*", async (c, next) => {
+  if (c.req.path === "/ws") {
+    return await next();
+  }
+
   const context = await createContext({ context: c });
 
   const rpcResult = await rpcHandler.handle(c.req.raw, {
@@ -73,6 +79,39 @@ app.use("/*", async (c, next) => {
 
 app.get("/", (c) => {
   return c.text("OK");
+});
+
+app.get("/ws", (c) => {
+  const upgradeHeader = c.req.header("upgrade");
+  if (upgradeHeader !== "websocket") {
+    return c.text("Expected Upgrade: websocket", 426);
+  }
+
+  // @ts-expect-error — Bun.upgrade is runtime-only API
+  const success = Bun.upgrade(c.req.raw, {
+    data: {},
+    open(ws: ServerWebSocket<unknown>) {
+      addWsClient((data: string) => {
+        ws.send(data);
+      });
+    },
+    message(ws: ServerWebSocket<unknown>, message: string | Buffer) {
+      if (message === "ping") {
+        ws.send("pong");
+      }
+    },
+    close(ws: ServerWebSocket<unknown>) {
+      removeWsClient((data: string) => {
+        ws.send(data);
+      });
+    },
+  });
+
+  if (!success) {
+    return c.text("WebSocket upgrade failed", 500);
+  }
+
+  return c.body(null);
 });
 
 export default app;

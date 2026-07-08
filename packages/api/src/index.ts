@@ -17,4 +17,16 @@ const requireAuth = o.middleware(async ({ context, next }) => {
   });
 });
 
+const requireAgent = o.middleware(async ({ context, next }) => {
+  if (!context.agent) {
+    throw new ORPCError("UNAUTHORIZED", { message: "Invalid agent token" });
+  }
+  return next({
+    context: {
+      agent: context.agent,
+    },
+  });
+});
+
 export const protectedProcedure = publicProcedure.use(requireAuth);
+export const agentProcedure = publicProcedure.use(requireAgent);
