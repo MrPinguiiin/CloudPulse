@@ -5,9 +5,9 @@
 	import { orpc } from '$lib/orpc';
 	import { useLiveMetrics } from '$lib/metrics-store.svelte';
 	import { createQuery } from '@tanstack/svelte-query';
-	import MetricGauge from '../../../components/MetricGauge.svelte';
-	import LineChart from '../../../components/LineChart.svelte';
-	import ServerStatusBadge from '../../../components/ServerStatusBadge.svelte';
+	import MetricGauge from '$lib/components/MetricGauge.svelte';
+	import LineChart from '$lib/components/LineChart.svelte';
+	import ServerStatusBadge from '$lib/components/ServerStatusBadge.svelte';
 
 	const sessionQuery = authClient.useSession();
 	const serverId = $derived($page.params.id as string);

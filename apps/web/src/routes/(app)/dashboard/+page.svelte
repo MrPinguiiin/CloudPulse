@@ -4,7 +4,7 @@
 	import { orpc } from '$lib/orpc';
 	import { useLiveMetrics } from '$lib/metrics-store.svelte';
 	import { createQuery } from '@tanstack/svelte-query';
-	import ServerCard from '../../components/ServerCard.svelte';
+	import ServerCard from '$lib/components/ServerCard.svelte';
 
 	const sessionQuery = authClient.useSession();
 	const serverList = createQuery(() => orpc.monitoring.serverList.queryOptions());
