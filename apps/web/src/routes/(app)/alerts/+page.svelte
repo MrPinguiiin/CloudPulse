@@ -77,7 +77,7 @@
 								<span>Current: {alert.currentValue.toFixed(1)}%</span>
 								<span>{new Date(alert.createdAt).toLocaleString()}</span>
 								{#if alert.resolvedAt}
-									<span class="text-emerald-400">Resolved</span>
+									<span class="text-primary">Resolved</span>
 								{/if}
 							</div>
 						</div>

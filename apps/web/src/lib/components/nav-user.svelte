@@ -31,7 +31,7 @@
   <SidebarMenu>
     <SidebarMenuItem>
       <SidebarMenuButton size="lg">
-        <div class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400">
+        <div class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-accent-foreground">
           <User class="size-4" />
         </div>
         <div class="grid flex-1 text-start text-sm leading-tight">

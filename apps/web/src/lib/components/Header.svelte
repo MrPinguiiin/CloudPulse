@@ -83,7 +83,7 @@
 				<Button variant="ghost" size="sm" onclick={() => goto("/login")}>
 					Sign In
 				</Button>
-				<Button size="sm" class="bg-indigo-600 hover:bg-indigo-500" onclick={() => goto("/login")}>
+				<Button size="sm" class="bg-primary hover:bg-primary/80" onclick={() => goto("/login")}>
 					Get Started
 				</Button>
 			{/if}

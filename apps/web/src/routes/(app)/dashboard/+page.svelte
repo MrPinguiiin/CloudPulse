@@ -144,7 +144,7 @@
 						<div class="flex items-center gap-2 rounded-lg border border-border bg-card p-3">
 							<code class="flex-1 break-all font-mono text-xs">{agentToken}</code>
 							<Button variant="ghost" size="icon" onclick={copyToken}>
-								{#if copied}<Check class="size-4 text-emerald-400" />{:else}<Copy class="size-4" />{/if}
+								{#if copied}<Check class="size-4 text-primary" />{:else}<Copy class="size-4" />{/if}
 							</Button>
 						</div>
 						<div class="rounded-lg bg-muted/50 p-3 font-mono text-xs space-y-1 text-muted-foreground">

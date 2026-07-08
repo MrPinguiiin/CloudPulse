@@ -42,8 +42,8 @@
 <SidebarRoot collapsible="icon">
 	<SidebarHeader>
 		<div class="flex items-center gap-2 px-2 py-1">
-			<div class="flex size-6 shrink-0 items-center justify-center rounded-md bg-indigo-600">
-				<Activity class="size-3.5 text-white" />
+			<div class="flex size-6 shrink-0 items-center justify-center rounded-md bg-sidebar-primary">
+				<Activity class="size-3.5 text-sidebar-primary-foreground" />
 			</div>
 			<span class="font-mono font-semibold text-sm tracking-tight group-data-[collapsible=icon]:hidden">
 				CloudPulse
