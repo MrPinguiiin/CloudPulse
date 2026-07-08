@@ -11,9 +11,12 @@
 
   const { label, value = 0, max = 100, unit = "%", detail = "", gradientFrom = "#10b981", gradientTo = "#059669" }: Props = $props();
 
-  const safe = $derived(Math.max(0, Math.min(100, Number(value) || 0)));
+  const safe = $derived(Math.max(0, Math.min(max, Number(value) || 0)));
+  const safePct = $derived(max > 0 ? (safe / max) * 100 : 0);
   const circumference = 2 * Math.PI * 45;
-  const offset = $derived(circumference - (safe / 100) * circumference);
+  const offset = $derived(circumference - (safePct / 100) * circumference);
+
+  const display = $derived(unit === "%" ? `${safe.toFixed(1)}%` : `${safe.toFixed(1)} ${unit}`);
 
   const gradientId = $derived(`gauge-${label.replace(/\s/g, "")}`);
 </script>

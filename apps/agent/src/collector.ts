@@ -25,6 +25,10 @@ export interface SystemMetrics {
   timestamp: string;
 }
 
+let prevRx = 0;
+let prevTx = 0;
+let prevTime = Date.now();
+
 export async function collectMetrics(): Promise<SystemMetrics> {
   const [
     cpuLoad,
@@ -49,7 +53,20 @@ export async function collectMetrics(): Promise<SystemMetrics> {
   const mainDisk = disk[0];
   const mainNet = netStats[0];
 
-  const now = new Date();
+  const now = Date.now();
+  const currentRx = mainNet?.rx_bytes ?? 0;
+  const currentTx = mainNet?.tx_bytes ?? 0;
+
+  const elapsed = (now - prevTime) / 1000;
+  const rxDelta = currentRx - prevRx;
+  const txDelta = currentTx - prevTx;
+
+  const rxSpeed = elapsed > 0 && rxDelta >= 0 ? rxDelta / elapsed : null;
+  const txSpeed = elapsed > 0 && txDelta >= 0 ? txDelta / elapsed : null;
+
+  prevRx = currentRx;
+  prevTx = currentTx;
+  prevTime = now;
 
   return {
     cpuUsage: Math.round(cpuLoad.currentLoad * 100) / 100,
@@ -65,16 +82,16 @@ export async function collectMetrics(): Promise<SystemMetrics> {
     diskUsed: mainDisk?.used ?? 0,
     diskFree: mainDisk?.available ?? 0,
     diskUsagePct: mainDisk ? Math.round(((mainDisk.used / mainDisk.size) * 100) * 100) / 100 : 0,
-    networkRx: mainNet?.rx_bytes ?? 0,
-    networkTx: mainNet?.tx_bytes ?? 0,
-    networkRxSpeed: mainNet?.rx_sec ?? null,
-    networkTxSpeed: mainNet?.tx_sec ?? null,
+    networkRx: currentRx,
+    networkTx: currentTx,
+    networkRxSpeed: Math.round((rxSpeed ?? 0) * 100) / 100,
+    networkTxSpeed: Math.round((txSpeed ?? 0) * 100) / 100,
     uptime: timeInfo.uptime,
     loadAvg1m: loadInfo.avgLoad ?? null,
     loadAvg5m: loadavg()[1] ?? null,
     loadAvg15m: loadavg()[2] ?? null,
     temperature: tempInfo.main ?? null,
-    timestamp: now.toISOString(),
+    timestamp: new Date().toISOString(),
   };
 }
 

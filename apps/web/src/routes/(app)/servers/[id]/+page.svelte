@@ -7,7 +7,8 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import MetricGauge from '$lib/components/MetricGauge.svelte';
 	import LineChart from '$lib/components/LineChart.svelte';
-	import { Activity, Zap, Cpu, HardDrive, Server } from 'lucide-svelte';
+	import Button from '$lib/components/ui/button.svelte';
+	import { Activity, Server, Download, Upload, Gauge } from 'lucide-svelte';
 	import InfoRow from '$lib/components/InfoRow.svelte';
 
 	const sessionQuery = authClient.useSession();
@@ -19,7 +20,7 @@
 	);
 
 	const historyQuery = createQuery(() =>
-		orpc.monitoring.metricHistory.queryOptions({ input: { serverId, hours: 24 }, refetchInterval: 1000 }),
+		orpc.monitoring.metricHistory.queryOptions({ input: { serverId, hours: 2 }, refetchInterval: 1000 }),
 	);
 
 	$effect(() => {
@@ -41,6 +42,8 @@
 						diskUsagePct: serverQuery.data.metrics[0].diskUsagePct,
 						networkRx: Number(serverQuery.data.metrics[0].networkRx),
 						networkTx: Number(serverQuery.data.metrics[0].networkTx),
+						networkRxSpeed: serverQuery.data.metrics[0].networkRxSpeed as number | null,
+						networkTxSpeed: serverQuery.data.metrics[0].networkTxSpeed as number | null,
 						uptime: Number(serverQuery.data.metrics[0].uptime),
 						ramUsed: Number(serverQuery.data.metrics[0].ramUsed),
 						ramTotal: Number(serverQuery.data.metrics[0].ramTotal),
@@ -72,6 +75,14 @@
 		return bytes + ' B';
 	}
 
+	function formatSpeed(bytesPerSec: number | null): string {
+		if (!bytesPerSec) return '0 B/s';
+		if (bytesPerSec >= 1e9) return (bytesPerSec / 1e9).toFixed(1) + ' GB/s';
+		if (bytesPerSec >= 1e6) return (bytesPerSec / 1e6).toFixed(1) + ' MB/s';
+		if (bytesPerSec >= 1e3) return (bytesPerSec / 1e3).toFixed(1) + ' KB/s';
+		return bytesPerSec + ' B/s';
+	}
+
 	function formatUptime(seconds: number): string {
 		const d = Math.floor(seconds / 86400);
 		const h = Math.floor((seconds % 86400) / 3600);
@@ -79,6 +90,65 @@
 		if (d > 0) return `${d}d ${h}h ${m}m`;
 		if (h > 0) return `${h}h ${m}m`;
 		return `${m}m`;
+	}
+
+	let speedTestRunning = $state(false);
+	let speedLiveMbps = $state(0);
+	let speedTestDone = $state(false);
+	let peakMbps = $state(0);
+	let speedTestError = $state(false);
+
+	async function runSpeedTest() {
+		speedTestRunning = true;
+		speedLiveMbps = 0;
+		peakMbps = 0;
+		speedTestDone = false;
+		speedTestError = false;
+
+		try {
+			const urls = [
+				'https://speed.cloudflare.com/__down?bytes=26214400',
+				'https://speed.cloudflare.com/__down?bytes=26214400',
+				'https://speed.cloudflare.com/__down?bytes=26214400',
+			];
+
+			for (const url of urls) {
+				if (!speedTestRunning) break;
+
+				const startTime = performance.now();
+				let bytesReceived = 0;
+				let lastUpdate = startTime;
+				let lastBytes = 0;
+
+				const response = await fetch(url + '&r=' + Math.random(), { cache: 'no-store' });
+				const reader = response.body!.getReader();
+
+				while (true) {
+					const { done, value } = await reader.read();
+					if (done || !speedTestRunning) break;
+
+					bytesReceived += value?.length ?? 0;
+					const now = performance.now();
+					const deltaMs = now - lastUpdate;
+					if (deltaMs > 100) {
+						const deltaBytes = bytesReceived - lastBytes;
+						const bitsPerSec = (deltaBytes * 8) / (deltaMs / 1000);
+						speedLiveMbps = bitsPerSec / 1e6;
+						lastUpdate = now;
+						lastBytes = bytesReceived;
+					}
+				}
+
+				const totalMs = performance.now() - startTime;
+				const avgMbps = (bytesReceived * 8 / (totalMs / 1000)) / 1e6;
+				peakMbps = Math.max(peakMbps, avgMbps);
+			}
+		} catch {
+			speedTestError = true;
+		}
+
+		speedTestRunning = false;
+		speedTestDone = true;
 	}
 </script>
 
@@ -112,37 +182,95 @@
 
 			<section class="mb-8">
 				<h2 class="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wide">Current Status</h2>
-				<div class="grid grid-cols-2 md:grid-cols-4 gap-8 bg-card p-8 rounded-2xl border border-border shadow-sm">
-					<MetricGauge
-						label="CPU"
-						value={metric?.cpuUsage ?? 0}
+				<div class="grid grid-cols-2 md:grid-cols-4 gap-6 bg-card p-6 rounded-2xl border border-border shadow-sm">
+					<MetricGauge label="CPU" value={metric?.cpuUsage ?? 0}
 						detail={metric ? `${Math.round(metric.cpuUsage)}% used` : ''}
-						gradientFrom="#10b981"
-						gradientTo="#059669"
-					/>
-					<MetricGauge
-						label="RAM"
-						value={metric?.ramUsagePct ?? 0}
+						gradientFrom="#10b981" gradientTo="#059669" />
+					<MetricGauge label="RAM" value={metric?.ramUsagePct ?? 0}
 						detail={metric ? `${formatBytes(metric.ramUsed)} / ${formatBytes(metric.ramTotal)}` : ''}
-						gradientFrom="#3b82f6"
-						gradientTo="#2563eb"
-					/>
-					<MetricGauge
-						label="Disk"
-						value={metric?.diskUsagePct ?? 0}
+						gradientFrom="#3b82f6" gradientTo="#2563eb" />
+					<MetricGauge label="Disk" value={metric?.diskUsagePct ?? 0}
 						detail={metric ? `${formatBytes(metric.diskUsed)} / ${formatBytes(metric.diskTotal)}` : ''}
-						gradientFrom="#a78bfa"
-						gradientTo="#8b5cf6"
-					/>
-					<MetricGauge
-						label="Temp"
-						value={metric?.temperature ?? 0}
-						max={100}
-						unit="°C"
+						gradientFrom="#a78bfa" gradientTo="#8b5cf6" />
+					<MetricGauge label="Temp" value={metric?.temperature ?? 0} max={100} unit="°C"
 						detail={metric?.temperature ? `${metric.temperature.toFixed(1)}°C` : ''}
-						gradientFrom="#f97316"
-						gradientTo="#ef4444"
-					/>
+						gradientFrom="#f97316" gradientTo="#ef4444" />
+				</div>
+			</section>
+
+			<section class="mb-8">
+				<h2 class="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wide">Network</h2>
+				<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+					<div class="bg-card p-6 rounded-2xl border border-border shadow-sm">
+						<div class="flex items-center gap-2 mb-4">
+							<Download class="w-5 h-5 text-sky-400" />
+							<h3 class="text-lg font-semibold text-foreground">Realtime Traffic</h3>
+						</div>
+						<div class="grid grid-cols-2 gap-4 mb-4">
+							<div class="rounded-lg bg-muted/30 p-4 text-center">
+								<div class="flex items-center justify-center gap-1 text-4xl font-bold tabular-nums text-sky-400">
+									<Download class="size-5 text-sky-400/60" />
+									{formatSpeed(metric?.networkRxSpeed ?? null)}
+								</div>
+								<div class="mt-1 text-xs text-muted-foreground">Download</div>
+							</div>
+							<div class="rounded-lg bg-muted/30 p-4 text-center">
+								<div class="flex items-center justify-center gap-1 text-4xl font-bold tabular-nums text-rose-400">
+									<Upload class="size-5 text-rose-400/60" />
+									{formatSpeed(metric?.networkTxSpeed ?? null)}
+								</div>
+								<div class="mt-1 text-xs text-muted-foreground">Upload</div>
+							</div>
+						</div>
+						<div class="rounded-lg bg-muted/20 p-3 flex justify-between text-xs text-muted-foreground">
+							<span>Total RX: {metric ? formatBytes(metric.networkRx) : '—'}</span>
+							<span>Total TX: {metric ? formatBytes(metric.networkTx) : '—'}</span>
+						</div>
+					</div>
+
+					<div class="bg-card p-6 rounded-2xl border border-border shadow-sm">
+						<div class="flex items-center gap-2 mb-4">
+							<Gauge class="w-5 h-5 text-amber-400" />
+							<h3 class="text-lg font-semibold text-foreground">Speed Test</h3>
+						</div>
+						<div class="flex flex-col items-center justify-center min-h-[140px]">
+							{#if speedTestRunning}
+								<div class="w-full space-y-3">
+									<div class="h-2 w-full overflow-hidden rounded-full bg-muted">
+										<div class="h-full rounded-full bg-gradient-to-r from-sky-500 to-blue-500 animate-pulse transition-all" style="width: 75%"></div>
+									</div>
+									<div class="text-center font-mono text-3xl font-bold tabular-nums text-sky-400 transition-all">
+										↓ {speedLiveMbps.toFixed(1)}
+									</div>
+									<div class="text-center text-xs text-muted-foreground">Mbps</div>
+									{#if peakMbps > 0}
+										<div class="text-center text-[11px] text-muted-foreground/50">peak: {peakMbps.toFixed(1)} Mbps</div>
+									{/if}
+								</div>
+							{:else if speedTestDone}
+								<div class="text-center space-y-2">
+									<div class="text-center font-mono text-3xl font-bold tabular-nums text-sky-400">
+										↓ {peakMbps.toFixed(1)}
+									</div>
+									<div class="text-xs text-muted-foreground">Mbps</div>
+									{#if speedTestError}
+										<div class="text-xs text-destructive">Test failed — try again</div>
+									{/if}
+								</div>
+							{:else}
+								<div class="text-center space-y-3">
+									<div class="text-4xl text-muted-foreground/30">—</div>
+									<div class="text-xs text-muted-foreground">Test your internet speed</div>
+								</div>
+							{/if}
+							<div class="mt-4">
+								<Button size="sm" onclick={runSpeedTest} disabled={speedTestRunning}>
+									<Gauge class="size-3.5 mr-1" />
+									{speedTestRunning ? 'Testing...' : speedTestDone ? 'Retest' : 'Run Speed Test'}
+								</Button>
+							</div>
+						</div>
+					</div>
 				</div>
 			</section>
 
@@ -153,7 +281,8 @@
 						<h3 class="text-lg font-semibold text-foreground">System Information</h3>
 					</div>
 					<div>
-						<InfoRow label="Operating System" value={serverQuery.data.osName ? `${serverQuery.data.osName} ${serverQuery.data.osVersion ?? ''}` : '—'} />
+						<InfoRow label="Operating System"
+							value={serverQuery.data.osName ? `${serverQuery.data.osName} ${serverQuery.data.osVersion ?? ''}` : '—'} />
 						<InfoRow label="Kernel" value={serverQuery.data.kernel ?? '—'} />
 						<InfoRow label="CPU Model" value={serverQuery.data.metrics?.[0]?.cpuModel ?? '—'} />
 						<InfoRow label="Cores" value={serverQuery.data.metrics?.[0]?.cpuCores ? String(serverQuery.data.metrics[0].cpuCores) : '—'} />
@@ -180,24 +309,14 @@
 
 			<section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 				<div class="bg-card p-6 rounded-2xl border border-border shadow-sm">
-					<h3 class="text-lg font-semibold text-foreground mb-6">CPU History (24h)</h3>
-					<LineChart
-						data={chartData.map((d) => ({ timestamp: d.timestamp, value: d.cpu }))}
-						color="#10b981"
-						label="CPU"
-						maxY={100}
-						height={200}
-					/>
+					<h3 class="text-lg font-semibold text-foreground mb-6">CPU History (2h)</h3>
+					<LineChart data={chartData.map((d) => ({ timestamp: d.timestamp, value: d.cpu }))}
+						color="#10b981" label="CPU" maxY={100} height={200} />
 				</div>
 				<div class="bg-card p-6 rounded-2xl border border-border shadow-sm">
-					<h3 class="text-lg font-semibold text-foreground mb-6">RAM History (24h)</h3>
-					<LineChart
-						data={chartData.map((d) => ({ timestamp: d.timestamp, value: d.ram }))}
-						color="#3b82f6"
-						label="RAM"
-						maxY={100}
-						height={200}
-					/>
+					<h3 class="text-lg font-semibold text-foreground mb-6">RAM History (2h)</h3>
+					<LineChart data={chartData.map((d) => ({ timestamp: d.timestamp, value: d.ram }))}
+						color="#3b82f6" label="RAM" maxY={100} height={200} />
 				</div>
 			</section>
 		</div>
