@@ -35,6 +35,8 @@
 			(serverQuery.data?.metrics?.[0]
 				? {
 						cpuUsage: serverQuery.data.metrics[0].cpuUsage,
+						cpuCores: serverQuery.data.metrics[0].cpuCores,
+						cpuModel: serverQuery.data.metrics[0].cpuModel,
 						ramUsagePct: serverQuery.data.metrics[0].ramUsagePct,
 						diskUsagePct: serverQuery.data.metrics[0].diskUsagePct,
 						networkRx: Number(serverQuery.data.metrics[0].networkRx),
@@ -114,18 +116,21 @@
 					<MetricGauge
 						label="CPU"
 						value={metric?.cpuUsage ?? 0}
+						detail={metric ? `${Math.round(metric.cpuUsage)}% used` : ''}
 						gradientFrom="#10b981"
 						gradientTo="#059669"
 					/>
 					<MetricGauge
 						label="RAM"
 						value={metric?.ramUsagePct ?? 0}
+						detail={metric ? `${formatBytes(metric.ramUsed)} / ${formatBytes(metric.ramTotal)}` : ''}
 						gradientFrom="#3b82f6"
 						gradientTo="#2563eb"
 					/>
 					<MetricGauge
 						label="Disk"
 						value={metric?.diskUsagePct ?? 0}
+						detail={metric ? `${formatBytes(metric.diskUsed)} / ${formatBytes(metric.diskTotal)}` : ''}
 						gradientFrom="#a78bfa"
 						gradientTo="#8b5cf6"
 					/>
@@ -134,6 +139,7 @@
 						value={metric?.temperature ?? 0}
 						max={100}
 						unit="°C"
+						detail={metric?.temperature ? `${metric.temperature.toFixed(1)}°C` : ''}
 						gradientFrom="#f97316"
 						gradientTo="#ef4444"
 					/>
@@ -149,23 +155,25 @@
 					<div>
 						<InfoRow label="Operating System" value={serverQuery.data.osName ? `${serverQuery.data.osName} ${serverQuery.data.osVersion ?? ''}` : '—'} />
 						<InfoRow label="Kernel" value={serverQuery.data.kernel ?? '—'} />
-						<InfoRow label="Provider" value={serverQuery.data.provider ?? 'Laptop'} />
-						<InfoRow label="Location" value={serverQuery.data.location ?? 'Local'} />
-						<InfoRow label="Port" value={String(serverQuery.data.port)} last />
+						<InfoRow label="CPU Model" value={serverQuery.data.metrics?.[0]?.cpuModel ?? '—'} />
+						<InfoRow label="Cores" value={serverQuery.data.metrics?.[0]?.cpuCores ? String(serverQuery.data.metrics[0].cpuCores) : '—'} />
+						<InfoRow label="Uptime" value={metric ? formatUptime(metric.uptime) : '—'} />
+						<InfoRow label="Load (1m)" value={metric?.loadAvg1m ? metric.loadAvg1m.toFixed(2) : '—'} last />
 					</div>
 				</div>
 
 				<div class="bg-card p-6 rounded-2xl border border-border shadow-sm">
 					<div class="flex items-center gap-2 mb-6">
-						<Zap class="w-5 h-5 text-muted-foreground" />
-						<h3 class="text-lg font-semibold text-foreground">Resource Details</h3>
+						<Server class="w-5 h-5 text-muted-foreground" />
+						<h3 class="text-lg font-semibold text-foreground">Server Info</h3>
 					</div>
 					<div>
-						<InfoRow label="RAM" value={metric ? `${formatBytes(metric.ramUsed)} / ${formatBytes(metric.ramTotal)}` : '—'} />
-						<InfoRow label="Disk" value={metric ? `${formatBytes(metric.diskUsed)} / ${formatBytes(metric.diskTotal)}` : '—'} />
-						<InfoRow label="Uptime" value={metric ? formatUptime(metric.uptime) : '—'} />
-						<InfoRow label="Load (1m)" value={metric?.loadAvg1m ? metric.loadAvg1m.toFixed(2) : '—'} />
-						<InfoRow label="Temperature" value={metric?.temperature ? `${metric.temperature.toFixed(1)}°C` : '—'} last />
+						<InfoRow label="Type" value={serverQuery.data.type ?? '—'} />
+						<InfoRow label="Provider" value={serverQuery.data.provider ?? 'Laptop'} />
+						<InfoRow label="Location" value={serverQuery.data.location ?? 'Local'} />
+						<InfoRow label="IP Address" value={serverQuery.data.ip} />
+						<InfoRow label="Port" value={String(serverQuery.data.port)} />
+						<InfoRow label="Status" value={status} last />
 					</div>
 				</div>
 			</section>
