@@ -12,12 +12,13 @@ async function main() {
 
   const token = config.token;
   if (!token) {
-    console.error(
-      "[agent] No AGENT_TOKEN configured. This agent cannot send data.\n" +
+    console.warn(
+      "[agent] WARNING: No AGENT_TOKEN configured. Agent monitoring is disabled.\n" +
       "  Create a server in the dashboard first, then copy the agent token and restart with:\n" +
       "  AGENT_TOKEN=<token> bun run apps/agent/src/index.ts",
     );
-    process.exit(1);
+    console.log("[agent] Running in idle mode — waiting for token...");
+    return;
   }
 
   const reporter = new Reporter(token);

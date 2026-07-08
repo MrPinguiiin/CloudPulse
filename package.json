@@ -21,7 +21,7 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "turbo run dev --filter=!agent",
     "build": "turbo run build",
     "check-types": "turbo run check-types",
     "dev:web": "turbo run dev -F web",
@@ -39,6 +39,7 @@
     "deploy:check": "vercel deploy --dry"
   },
   "dependencies": {
+    "@lucide/svelte": "^1.23.0",
     "@monitoring-server/env": "workspace:*",
     "dotenv": "catalog:",
     "zod": "catalog:"

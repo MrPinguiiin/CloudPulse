@@ -1,0 +1,22 @@
+<script lang="ts">
+  import { cn, type WithElementRef } from "$lib/utils";
+  import type { HTMLAttributes } from "svelte/elements";
+
+  let {
+    ref = $bindable(null),
+    class: className,
+    children,
+    ...restProps
+  }: WithElementRef<HTMLAttributes<HTMLDivElement>> & {
+    children?: import("svelte").Snippet;
+  } = $props();
+</script>
+
+<div
+  bind:this={ref}
+  data-slot="card-footer"
+  class={cn("flex items-center p-6 pt-0", className)}
+  {...restProps}
+>
+  {#if children}{@render children()}{/if}
+</div>

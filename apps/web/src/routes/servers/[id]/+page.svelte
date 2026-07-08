@@ -99,7 +99,6 @@
 		<p class="text-neutral-500">Redirecting...</p>
 	</div>
 {:else if serverQuery.data}
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div class="container mx-auto max-w-6xl px-4 py-6">
 		<div class="mb-6 flex items-center justify-between">
 			<div>
