@@ -18,13 +18,13 @@
 		<footer class="border-t border-border/40 py-6">
 			<div class="container mx-auto max-w-6xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
 				<div class="flex items-center gap-2">
-					<div class="flex size-5 items-center justify-center rounded bg-primary/20">
-						<Activity class="size-3 text-primary" />
+					<div class="flex size-5 items-center justify-center rounded bg-indigo-500/20">
+						<Activity class="size-3 text-indigo-400" />
 					</div>
-					<span class="text-xs text-muted-foreground">CloudPulse Monitoring</span>
+					<span class="font-mono text-xs text-muted-foreground">CloudPulse</span>
 				</div>
-				<p class="text-xs text-muted-foreground">
-					Agent-based infrastructure monitoring platform
+				<p class="font-mono text-xs text-muted-foreground/60">
+					Agent-based infrastructure monitoring
 				</p>
 			</div>
 		</footer>

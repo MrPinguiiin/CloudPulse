@@ -21,7 +21,7 @@
 			<div class="flex size-6 items-center justify-center rounded-md bg-primary">
 				<Activity class="size-3.5 text-primary-foreground" />
 			</div>
-			<span class="font-semibold text-sm">CloudPulse</span>
+			<span class="font-mono font-semibold text-sm tracking-tight">CloudPulse</span>
 		</a>
 
 		<nav class="flex items-center gap-4 text-sm ml-6">
@@ -49,7 +49,7 @@
 				<Button variant="ghost" size="sm" onclick={() => goto("/login")}>
 					Sign In
 				</Button>
-				<Button size="sm" onclick={() => goto("/login")}>
+				<Button size="sm" class="bg-indigo-600 hover:bg-indigo-500" onclick={() => goto("/login")}>
 					Get Started
 				</Button>
 			{/if}
