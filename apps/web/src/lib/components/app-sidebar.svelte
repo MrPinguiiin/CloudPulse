@@ -23,7 +23,7 @@
 		},
 		{
 			title: "Servers",
-			url: "/dashboard",
+			url: "/servers",
 			icon: Server,
 		},
 		{
